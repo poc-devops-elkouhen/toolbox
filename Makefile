@@ -5,7 +5,7 @@ APPS_BASE_DIR     ?= $(CURDIR)
 ARGOCD_NAMESPACE  ?= argocd
 GITLAB_NAMESPACE  ?= gitlab
 
-.PHONY: help init-project gitlab-seed argocd-repo-creds
+.PHONY: help init-project gitlab-seed argocd-repo-creds get-gitlab-token
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}'
@@ -21,6 +21,10 @@ gitlab-seed: ## Seed les projets GitLab depuis l'inventaire plateforme
 	PLATFORM_REPO_URL=$(PLATFORM_REPO_URL) GITLAB_URL=http://gitlab.$(GITLAB_DOMAIN) \
 	    GITLAB_NAMESPACE=$(GITLAB_NAMESPACE) APPS_BASE_DIR=$(APPS_BASE_DIR) \
 	    GITLAB_TOKEN=$(GITLAB_TOKEN) python3 scripts/gitlab-seed.py
+
+get-gitlab-token: ## Affiche le GITLAB_TOKEN (usage : eval $(make get-gitlab-token))
+	GITLAB_URL=http://gitlab.$(GITLAB_DOMAIN) \
+	    GITLAB_NAMESPACE=$(GITLAB_NAMESPACE) python3 scripts/get-gitlab-token.py
 
 argocd-repo-creds: ## Cree les credentials ArgoCD pour les repos manifests prives
 	PLATFORM_REPO_URL=$(PLATFORM_REPO_URL) GITLAB_URL=http://gitlab.$(GITLAB_DOMAIN) \
