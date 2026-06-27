@@ -5,6 +5,8 @@
 #   Source : sourceURL (clone HTTP) si présent dans l'inventaire, sinon chemin
 #   local APPS_BASE_DIR/<localPath>. Le code reçoit en plus un .gitlab-ci.yml
 #   généré depuis le template.
+from __future__ import annotations
+
 import atexit
 import base64
 import json
@@ -30,6 +32,9 @@ APPS_FILE = Path(os.environ.get("APPS_FILE", REPO_ROOT / "argocd/apps.yaml"))
 # Local app repos are siblings of the caller's directory, not of the (possibly
 # cloned) platform repo. Default to REPO_ROOT for backward-compat with local mode.
 APPS_BASE_DIR = Path(os.environ.get("APPS_BASE_DIR", str(REPO_ROOT))).resolve()
+SIBLING_PROJECTS_DIR = Path(os.environ.get("SIBLING_PROJECTS_DIR", str(APPS_BASE_DIR.parent))).resolve()
+SEED_SIBLING_PROJECTS = os.environ.get("SEED_SIBLING_PROJECTS", "true").lower() not in ("0", "false", "no")
+SIBLING_PROJECTS_PUSH_ACCESS_LEVEL = int(os.environ.get("SIBLING_PROJECTS_PUSH_ACCESS_LEVEL", "40"))
 inventory = load_inventory(APPS_FILE)
 
 
@@ -74,6 +79,60 @@ def _resolve_repo_dir(source_url: str | None, local_path: Path, label: str) -> P
         print(f"Dépôt git {label} introuvable: {local_path}", file=sys.stderr)
         sys.exit(1)
     return local_path
+
+
+def _resolved_existing_git_dir(path: Path) -> Path | None:
+    resolved = path.resolve()
+    if (resolved / ".git").is_dir():
+        return resolved
+    return None
+
+
+def handled_local_repo_dirs() -> set[Path]:
+    """Return local repos already seeded by the inventory-specific flows."""
+    handled = set()
+
+    ci_template_dir = _resolved_existing_git_dir(CI_TEMPLATE_SOURCE_DIR)
+    if ci_template_dir:
+        handled.add(ci_template_dir)
+
+    for app in inventory["apps"]:
+        manifests = app["manifests"]
+        if not manifests.get("sourceURL"):
+            repo_dir = _resolved_existing_git_dir(APPS_BASE_DIR / manifests["localPath"])
+            if repo_dir:
+                handled.add(repo_dir)
+
+        code = app["code"]
+        if not code.get("sourceURL"):
+            repo_dir = _resolved_existing_git_dir(APPS_BASE_DIR / code["localPath"])
+            if repo_dir:
+                handled.add(repo_dir)
+
+    return handled
+
+
+def handled_project_paths() -> set[str]:
+    handled = {CI_TEMPLATE_PROJECT_PATH}
+    for app in inventory["apps"]:
+        handled.add(app["manifests"]["projectPath"])
+        handled.add(app["code"]["projectPath"])
+    return handled
+
+
+def discover_sibling_repos(base_dir: Path) -> list[Path]:
+    if not SEED_SIBLING_PROJECTS:
+        print("Seed des projets frères désactivé (SEED_SIBLING_PROJECTS=false).")
+        return []
+    if not base_dir.is_dir():
+        print(f"Dossier des projets frères introuvable: {base_dir}", file=sys.stderr)
+        return []
+
+    repos = []
+    for child in sorted(base_dir.iterdir(), key=lambda p: p.name):
+        if child.is_dir() and (child / ".git").is_dir():
+            repos.append(child.resolve())
+    return repos
 
 
 def kube_secret_field(namespace, name, jsonpath):
@@ -457,3 +516,23 @@ for app in inventory["apps"]:
     seed_project_from_repo(code["projectPath"], code_source_dir)
     configure_main_gate(code_project_id, 0)
     configure_protected_environment(code_project_id, "prod", 40)
+
+# ── Autres dépôts locaux du workspace ───────────────────────────────────────
+
+already_seeded_dirs = handled_local_repo_dirs()
+already_seeded_project_paths = handled_project_paths()
+for repo_dir in discover_sibling_repos(SIBLING_PROJECTS_DIR):
+    project_name = repo_dir.name
+    project_path = f"{GITLAB_ROOT_NAMESPACE}/{project_name}"
+
+    if repo_dir in already_seeded_dirs:
+        print(f"Dépôt frère déjà couvert par l'inventaire, ignoré: {repo_dir}")
+        continue
+    if project_path in already_seeded_project_paths:
+        print(f"Projet frère déjà couvert par l'inventaire, ignoré: {project_path}")
+        continue
+
+    _, project_id = ensure_project(project_path, project_name)
+    unprotect_main_branch(project_id)
+    seed_project_from_repo(project_path, repo_dir)
+    configure_main_gate(project_id, SIBLING_PROJECTS_PUSH_ACCESS_LEVEL)
