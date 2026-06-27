@@ -44,6 +44,26 @@ def write_app_file(apps_dir: Path, app_name: str, app: dict) -> str:
     return action
 
 
+def delete_app_file(apps_dir: Path, app_name: str) -> Path | None:
+    app_file = apps_dir / f"{app_name}.yaml"
+    if not app_file.exists():
+        return None
+    app_file.unlink()
+    return app_file
+
+
+def delete_app_from_apps_file(apps_file: Path, app_name: str) -> bool:
+    content = apps_file.read_text()
+    prefix, chunks = split_apps_block(content)
+    updated_chunks = [chunk for chunk in chunks if app_chunk_name(chunk) != app_name]
+    if len(updated_chunks) == len(chunks):
+        return False
+
+    apps_text = "apps:\n" + "\n".join(updated_chunks) if updated_chunks else "apps: []"
+    apps_file.write_text(prefix.rstrip() + "\n\n" + apps_text.rstrip() + "\n")
+    return True
+
+
 def split_apps_block(content: str) -> tuple[str, list[str]]:
     match = re.search(r"^apps:\s*$", content, re.MULTILINE)
     if not match:

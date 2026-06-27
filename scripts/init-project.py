@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Initialise/update an app inventory file from local code and IaC Git repos.
 
-Usage:
+Local platform checkout:
   scripts/init-project.py ../my-app ../my-app-iac
+
+No local platform checkout:
+  PLATFORM_REPO_URL=http://gitlab.../root/poc-devops-platform.git scripts/init-project.py helloworld
 
 When PLATFORM_REPO_URL is set, clones the platform repo, applies the change,
 renders the ApplicationSet, and opens a GitLab MR instead of writing directly

@@ -13,6 +13,17 @@ from .discover import find_kustomize_path, services_from_code, services_from_kus
 from .errors import fail
 from platform_inventory import platform_repo_root
 
+USAGE = """Usage:
+  {script} <project-name>
+  {script} <code-repo-url-ou-chemin> <iac-repo-url-ou-chemin>
+
+Avec un nom de projet, les depots sont resolus depuis PROJECTS_DIR
+(par defaut: repertoire courant en mode PLATFORM_REPO_URL,
+sinon dossier parent du depot plateforme):
+  PROJECTS_DIR/helloworld
+  PROJECTS_DIR/helloworld-iac
+"""
+
 
 @dataclass(frozen=True)
 class InitProjectConfig:
@@ -28,14 +39,17 @@ class InitProjectConfig:
 
 
 def load_config(argv: list[str]) -> InitProjectConfig:
-    if len(argv) != 3:
-        fail(f"Usage: {argv[0]} <code-repo-url-ou-chemin> <iac-repo-url-ou-chemin>")
+    if len(argv) not in (2, 3):
+        fail(USAGE.format(script=argv[0]))
 
     repo_root = platform_repo_root()
     apps_file = Path(os.environ.get("APPS_FILE", repo_root / "argocd/apps.yaml")).resolve()
 
-    code_ref = argv[1]
-    iac_ref = argv[2]
+    if len(argv) == 2:
+        code_ref, iac_ref = _refs_from_project_arg(argv[1], repo_root)
+    else:
+        code_ref = argv[1]
+        iac_ref = argv[2]
     code_dir = _resolve_repo(code_ref, "Depot code")
     iac_dir = _resolve_repo(iac_ref, "Depot IaC")
 
@@ -58,6 +72,31 @@ def load_config(argv: list[str]) -> InitProjectConfig:
 
 def _is_git_url(s: str) -> bool:
     return s.startswith(("https://", "http://", "git@", "git://", "ssh://", "file://"))
+
+
+def _refs_from_project_arg(project_ref: str, repo_root: Path) -> tuple[str, str]:
+    """Resolve the shorthand project argument to code and IaC repo paths."""
+    if _is_git_url(project_ref):
+        fail(
+            "Le mode <project-name> attend un nom de projet ou un chemin local. "
+            "Pour des URLs Git, passe les deux depots explicitement."
+        )
+
+    project_path = Path(project_ref)
+    if project_path.exists() or project_ref.startswith(".") or "/" in project_ref:
+        code_path = project_path.resolve()
+        project_name = _name_from_ref(str(code_path))
+        return str(code_path), str(code_path.parent / f"{project_name}-iac")
+
+    project_name = slug(project_ref)
+    projects_dir = Path(os.environ.get("PROJECTS_DIR", _default_projects_dir(repo_root))).resolve()
+    return str(projects_dir / project_name), str(projects_dir / f"{project_name}-iac")
+
+
+def _default_projects_dir(repo_root: Path) -> Path:
+    if os.environ.get("PLATFORM_REPO_URL"):
+        return Path.cwd()
+    return repo_root.parent
 
 
 def _resolve_repo(ref: str, label: str) -> Path:

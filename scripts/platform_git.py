@@ -198,3 +198,33 @@ def create_mr_for_init(argv: list[str]) -> None:
         mr_title=f"[toolbox] Onboard {config.app_name}",
     )
     print(f"\nMR créée : {mr_url}")
+
+
+def create_mr_for_delete(argv: list[str]) -> None:
+    """Clone platform, remove app inventory, render appset, open a GitLab MR."""
+    from delete_projects import delete_project
+    from init_projects.common import slug
+    from platform_inventory import platform_repo_root
+
+    app_name = _delete_app_name_from_argv(argv)
+    delete_project(argv)
+
+    repo_root = platform_repo_root()  # returns the cached tmpdir
+    appset_path = repo_root / "argocd/managed/apps-appset.yaml"
+    appset_path.parent.mkdir(parents=True, exist_ok=True)
+    appset_path.write_text(_render_appset(repo_root))
+
+    branch = f"toolbox/delete-{slug(app_name)}"
+    mr_url = _push_branch_and_create_mr(
+        repo_root,
+        branch=branch,
+        commit_msg=f"feat(platform): remove {slug(app_name)}",
+        mr_title=f"[toolbox] Remove {slug(app_name)}",
+    )
+    print(f"\nMR créée : {mr_url}")
+
+
+def _delete_app_name_from_argv(argv: list[str]) -> str:
+    if len(argv) != 2:
+        return ""
+    return argv[1]
