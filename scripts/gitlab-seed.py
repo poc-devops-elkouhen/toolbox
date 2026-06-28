@@ -12,6 +12,7 @@ import base64
 import json
 import os
 import shutil
+import ssl
 import subprocess
 import sys
 import tempfile
@@ -28,6 +29,7 @@ from platform_inventory import load_inventory, platform_repo_root
 
 GITLAB_NAMESPACE = os.environ.get("GITLAB_NAMESPACE", "gitlab")
 GITLAB_URL = os.environ.get("GITLAB_URL", "https://gitlab.192.168.33.100.nip.io")
+GITLAB_INSECURE_TLS = os.environ.get("GITLAB_INSECURE_TLS", "true").lower() not in ("0", "false", "no")
 GITLAB_ROOT_NAMESPACE = os.environ.get("GITLAB_ROOT_NAMESPACE", "root")
 GITLAB_REMOTE_NAME = os.environ.get("GITLAB_REMOTE_NAME", "gitlab")
 REPO_ROOT = platform_repo_root()
@@ -39,6 +41,8 @@ SIBLING_PROJECTS_DIR = Path(os.environ.get("SIBLING_PROJECTS_DIR", str(APPS_BASE
 SEED_SIBLING_PROJECTS = os.environ.get("SEED_SIBLING_PROJECTS", "false").lower() not in ("0", "false", "no")
 SIBLING_PROJECTS_PUSH_ACCESS_LEVEL = int(os.environ.get("SIBLING_PROJECTS_PUSH_ACCESS_LEVEL", "40"))
 inventory = load_inventory(APPS_FILE)
+HTTPS_CONTEXT = None
+GIT_SSL_CONFIG: list[str] = []
 
 
 def yaml_value(dotted_key):
@@ -238,6 +242,48 @@ def kube_secret_field(namespace, name, jsonpath):
     return base64.b64decode(raw).decode() if raw else ""
 
 
+def configure_gitlab_ca():
+    """Trust the GitLab chart CA for local HTTPS API and git operations."""
+    global HTTPS_CONTEXT, GIT_SSL_CONFIG
+
+    if GITLAB_INSECURE_TLS:
+        print("TLS GitLab auto-signé: vérification désactivée (GITLAB_INSECURE_TLS=true).")
+        HTTPS_CONTEXT = ssl._create_unverified_context()
+        GIT_SSL_CONFIG = ["-c", "http.sslVerify=false"]
+        return
+
+    certs = []
+    try:
+        certs.append(kube_secret_field(
+            GITLAB_NAMESPACE, "gitlab-wildcard-tls-ca", "{.data.cfssl_ca}"
+        ))
+    except subprocess.CalledProcessError:
+        pass
+
+    try:
+        parsed = urllib.parse.urlparse(GITLAB_URL)
+        host = parsed.hostname
+        port = parsed.port or 443
+        if parsed.scheme == "https" and host:
+            certs.append(ssl.get_server_certificate((host, port)))
+    except OSError:
+        pass
+
+    certs = [cert for cert in certs if cert]
+    if not certs:
+        return
+
+    ca_file = tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", prefix="gitlab-ca-", suffix=".crt", delete=False
+    )
+    ca_file.write("\n".join(certs))
+    ca_file.close()
+    atexit.register(lambda: Path(ca_file.name).unlink(missing_ok=True))
+
+    HTTPS_CONTEXT = ssl.create_default_context(cafile=ca_file.name)
+    GIT_SSL_CONFIG = ["-c", f"http.sslCAInfo={ca_file.name}"]
+
+
 def http(url, method="GET", data=None, token=None):
     headers = {}
     body = None
@@ -248,7 +294,7 @@ def http(url, method="GET", data=None, token=None):
         headers["Content-Type"] = "application/x-www-form-urlencoded"
     req = urllib.request.Request(url, data=body, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(req) as resp:
+        with urllib.request.urlopen(req, context=HTTPS_CONTEXT) as resp:
             return resp.status, json.loads(resp.read() or b"null")
     except urllib.error.HTTPError as e:
         return e.code, {}
@@ -343,7 +389,7 @@ def seed_project_from_dir(project_path, source_dir):
         subprocess.run(["git", "-C", workdir, "add", "-A"], check=True)
         subprocess.run(["git", "-C", workdir, "commit", "-q", "-m", f"chore: seed initial du projet {project_path}"], check=True)
         subprocess.run(["git", "-C", workdir, "remote", "add", "origin", remote_url], check=True)
-        subprocess.run(["git", "-C", workdir, "push", "-q", "origin", "main"], check=True)
+        subprocess.run(["git", "-C", workdir, *GIT_SSL_CONFIG, "push", "-q", "origin", "main"], check=True)
 
     print(f"Contenu initial poussé sur 'main' de '{project_path}'.")
 
@@ -376,7 +422,7 @@ def seed_project_from_repo(project_path, repo_dir, branches_to_push=None):
 
     for branch in branches:
         subprocess.run(
-            ["git", "-C", str(repo_dir), "-c", f"http.extraheader={git_auth_header}",
+            ["git", "-C", str(repo_dir), *GIT_SSL_CONFIG, "-c", f"http.extraheader={git_auth_header}",
              "push", "-q", GITLAB_REMOTE_NAME, f"refs/heads/{branch}:refs/heads/{branch}"],
             check=True,
         )
@@ -388,7 +434,7 @@ def seed_repo_branches_from_ref(project_path, repo_dir, source_ref, branches):
     print(f"Poussée des branches '{branches}' de '{repo_dir}' vers '{project_path}' depuis '{source_ref}'...")
     for branch in branches.split():
         subprocess.run(
-            ["git", "-C", str(repo_dir), "-c", f"http.extraheader={git_auth_header}",
+            ["git", "-C", str(repo_dir), *GIT_SSL_CONFIG, "-c", f"http.extraheader={git_auth_header}",
              "push", "-q", GITLAB_REMOTE_NAME, f"+refs/heads/{source_ref}:refs/heads/{branch}"],
             check=True,
         )
@@ -456,7 +502,7 @@ def ensure_repository_file(project_id, file_path, local_file, commit_message):
 
     try:
         req = urllib.request.Request(raw_url, headers={"Authorization": f"Bearer {bearer_token}"})
-        with urllib.request.urlopen(req) as resp:
+        with urllib.request.urlopen(req, context=HTTPS_CONTEXT) as resp:
             current_content = resp.read()
         if current_content == local_content:
             print(f"Fichier '{file_path}' déjà à jour dans le projet {project_id}.")
@@ -573,6 +619,7 @@ def render_app_ci(app_name, services, showcase_service, internal_gitlab_host,
 root_password = kube_secret_field(
     GITLAB_NAMESPACE, "gitlab-gitlab-initial-root-password", "{.data.password}"
 )
+configure_gitlab_ca()
 
 _, auth = http(f"{GITLAB_URL}/oauth/token", method="POST", data={
     "grant_type": "password",
