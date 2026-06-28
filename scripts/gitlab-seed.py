@@ -21,6 +21,8 @@ import urllib.request
 from datetime import date
 from pathlib import Path
 
+import yaml
+
 from platform_inventory import load_inventory, platform_repo_root
 
 GITLAB_NAMESPACE = os.environ.get("GITLAB_NAMESPACE", "gitlab")
@@ -45,13 +47,78 @@ def yaml_value(dotted_key):
     return obj
 
 
-CI_TEMPLATE_PROJECT_PATH = os.environ.get("CI_TEMPLATE_PROJECT_PATH") or yaml_value("ciTemplate.projectPath")
-CI_TEMPLATE_PROJECT_NAME = os.environ.get("CI_TEMPLATE_PROJECT_NAME") or yaml_value("ciTemplate.projectName")
-CI_TEMPLATE_SOURCE_DIR = Path(
-    os.environ.get("CI_TEMPLATE_SOURCE_DIR") or APPS_BASE_DIR / yaml_value("ciTemplate.sourceDir")
+def _nested_value(data, dotted_key, default=None):
+    obj = data
+    for key in dotted_key.split("."):
+        if not isinstance(obj, dict) or key not in obj:
+            return default
+        obj = obj[key]
+    return obj
+
+
+def _load_platform_config() -> tuple[dict, Path | None]:
+    config_path = os.environ.get("PLATFORM_CONFIG")
+    if not config_path:
+        return {}, None
+
+    path = Path(config_path)
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    if not path.is_file():
+        print(f"Config plateforme introuvable: {path}", file=sys.stderr)
+        sys.exit(1)
+
+    with path.open() as f:
+        return yaml.safe_load(f) or {}, path
+
+
+def config_value(dotted_key, default=None):
+    return _nested_value(platform_config, dotted_key, default)
+
+
+def inventory_value(dotted_key, default=None):
+    return _nested_value(inventory, dotted_key, default)
+
+
+platform_config, platform_config_path = _load_platform_config()
+
+CI_TEMPLATE_PROJECT_PATH = (
+    os.environ.get("CI_TEMPLATE_PROJECT_PATH")
+    or config_value("platform.ciTemplate.projectPath")
+    or inventory_value("ciTemplate.projectPath")
+    or "root/ci-templates"
 )
-CI_TEMPLATE_REF = os.environ.get("CI_TEMPLATE_REF") or yaml_value("ciTemplate.ref")
-CI_TEMPLATE_FILE = os.environ.get("CI_TEMPLATE_FILE") or yaml_value("ciTemplate.file")
+CI_TEMPLATE_PROJECT_NAME = (
+    os.environ.get("CI_TEMPLATE_PROJECT_NAME")
+    or config_value("platform.ciTemplate.projectName")
+    or inventory_value("ciTemplate.projectName")
+    or "ci-templates"
+)
+ci_template_source_dir = os.environ.get("CI_TEMPLATE_SOURCE_DIR")
+ci_template_source_base = APPS_BASE_DIR
+if not ci_template_source_dir:
+    ci_template_source_dir = config_value("platform.ciTemplate.sourceDir")
+    if ci_template_source_dir and platform_config_path:
+        ci_template_source_base = platform_config_path.parent
+if not ci_template_source_dir:
+    ci_template_source_dir = inventory_value("ciTemplate.sourceDir") or "../ci-templates"
+CI_TEMPLATE_SOURCE_DIR = Path(
+    ci_template_source_dir
+    if Path(ci_template_source_dir).is_absolute()
+    else ci_template_source_base / ci_template_source_dir
+)
+CI_TEMPLATE_REF = (
+    os.environ.get("CI_TEMPLATE_REF")
+    or config_value("platform.ciTemplate.ref")
+    or inventory_value("ciTemplate.ref")
+    or "v0.11.1"
+)
+CI_TEMPLATE_FILE = (
+    os.environ.get("CI_TEMPLATE_FILE")
+    or config_value("platform.ciTemplate.file")
+    or inventory_value("ciTemplate.file")
+    or "/gitlab-ci.yml"
+)
 REGISTRY_HOST = os.environ.get("REGISTRY_HOST", "registry.registry.svc.cluster.local:5000")
 INTERNAL_GITLAB_HOST = os.environ.get("INTERNAL_GITLAB_HOST") or yaml_value("gitlab.internalHost")
 
