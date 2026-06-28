@@ -19,21 +19,21 @@ init-project: ## Onboard une app via MR: make init-project CODE_REPO=<url-http> 
 	@test -n "$(CODE_REPO)"    || (echo "CODE_REPO est requis"    >&2; exit 1)
 	@test -n "$(IAC_REPO)"    || (echo "IAC_REPO est requis"     >&2; exit 1)
 	@test -n "$(GITHUB_TOKEN)" || (echo "GITHUB_TOKEN est requis (clone + création PR GitHub)" >&2; exit 1)
-	PLATFORM_REPO_ROOT=$(PLATFORM_REPO_ROOT) PLATFORM_REPO_URL=$(PLATFORM_REPO_URL) GITLAB_URL=http://gitlab.$(GITLAB_DOMAIN) \
+	PLATFORM_REPO_ROOT=$(PLATFORM_REPO_ROOT) PLATFORM_REPO_URL=$(PLATFORM_REPO_URL) GITLAB_URL=https://gitlab.$(GITLAB_DOMAIN) \
 	    GITHUB_TOKEN=$(GITHUB_TOKEN) GITLAB_TOKEN=$(GITLAB_TOKEN) python3 scripts/init-project.py "$(CODE_REPO)" "$(IAC_REPO)"
 
 gitlab-seed: ## Seed les projets GitLab depuis l'inventaire plateforme
-	PLATFORM_REPO_ROOT=$(PLATFORM_REPO_ROOT) PLATFORM_REPO_URL=$(PLATFORM_REPO_URL) GITLAB_URL=http://gitlab.$(GITLAB_DOMAIN) \
+	PLATFORM_REPO_ROOT=$(PLATFORM_REPO_ROOT) PLATFORM_REPO_URL=$(PLATFORM_REPO_URL) GITLAB_URL=https://gitlab.$(GITLAB_DOMAIN) \
 	    GITLAB_NAMESPACE=$(GITLAB_NAMESPACE) APPS_BASE_DIR=$(APPS_BASE_DIR) SIBLING_PROJECTS_DIR=$(SIBLING_PROJECTS_DIR) \
 	    SEED_SIBLING_PROJECTS=$(SEED_SIBLING_PROJECTS) \
 	    CI_TEMPLATE_SOURCE_DIR=$(CI_TEMPLATE_SOURCE_DIR) \
 	    GITLAB_TOKEN=$(GITLAB_TOKEN) python3 scripts/gitlab-seed.py
 
 get-gitlab-token: ## Affiche le GITLAB_TOKEN (usage : eval $(make get-gitlab-token))
-	GITLAB_URL=http://gitlab.$(GITLAB_DOMAIN) \
+	GITLAB_URL=https://gitlab.$(GITLAB_DOMAIN) \
 	    GITLAB_NAMESPACE=$(GITLAB_NAMESPACE) python3 scripts/get-gitlab-token.py
 
 argocd-repo-creds: ## Cree les credentials ArgoCD pour les repos manifests prives
-	PLATFORM_REPO_ROOT=$(PLATFORM_REPO_ROOT) PLATFORM_REPO_URL=$(PLATFORM_REPO_URL) GITLAB_URL=http://gitlab.$(GITLAB_DOMAIN) \
+	PLATFORM_REPO_ROOT=$(PLATFORM_REPO_ROOT) PLATFORM_REPO_URL=$(PLATFORM_REPO_URL) GITLAB_URL=https://gitlab.$(GITLAB_DOMAIN) \
 	    GITLAB_NAMESPACE=$(GITLAB_NAMESPACE) ARGOCD_NAMESPACE=$(ARGOCD_NAMESPACE) \
 	    GITLAB_TOKEN=$(GITLAB_TOKEN) python3 scripts/argocd-repo-creds.py

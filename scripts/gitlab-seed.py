@@ -27,7 +27,7 @@ import yaml
 from platform_inventory import load_inventory, platform_repo_root
 
 GITLAB_NAMESPACE = os.environ.get("GITLAB_NAMESPACE", "gitlab")
-GITLAB_URL = os.environ.get("GITLAB_URL", "http://gitlab.192.168.33.100.nip.io")
+GITLAB_URL = os.environ.get("GITLAB_URL", "https://gitlab.192.168.33.100.nip.io")
 GITLAB_ROOT_NAMESPACE = os.environ.get("GITLAB_ROOT_NAMESPACE", "root")
 GITLAB_REMOTE_NAME = os.environ.get("GITLAB_REMOTE_NAME", "gitlab")
 REPO_ROOT = platform_repo_root()

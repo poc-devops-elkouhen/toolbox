@@ -159,7 +159,7 @@ def _render_appset(repo_root: Path) -> str:
 
 def _push_branch_and_create_mr(repo_root: Path, branch: str, commit_msg: str, mr_title: str) -> str:
     platform_url = os.environ["PLATFORM_REPO_URL"]
-    gitlab_url = os.environ.get("GITLAB_URL", "http://gitlab.192.168.33.100.nip.io")
+    gitlab_url = os.environ.get("GITLAB_URL", "https://gitlab.192.168.33.100.nip.io")
     token = _repo_token(platform_url)
     base_branch = os.environ.get("PLATFORM_BRANCH", "main")
 

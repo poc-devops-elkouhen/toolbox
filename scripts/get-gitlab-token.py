@@ -16,7 +16,7 @@ import urllib.parse
 import urllib.request
 
 GITLAB_NAMESPACE = os.environ.get("GITLAB_NAMESPACE", "gitlab")
-GITLAB_URL = os.environ.get("GITLAB_URL", "http://gitlab.192.168.33.100.nip.io")
+GITLAB_URL = os.environ.get("GITLAB_URL", "https://gitlab.192.168.33.100.nip.io")
 
 
 def kube_secret_field(namespace, name, jsonpath):

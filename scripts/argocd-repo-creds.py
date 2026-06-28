@@ -16,7 +16,7 @@ from pathlib import Path
 from platform_inventory import load_inventory, platform_repo_root
 
 GITLAB_NAMESPACE = os.environ.get("GITLAB_NAMESPACE", "gitlab")
-GITLAB_URL = os.environ.get("GITLAB_URL", "http://gitlab.192.168.33.100.nip.io")
+GITLAB_URL = os.environ.get("GITLAB_URL", "https://gitlab.192.168.33.100.nip.io")
 ARGOCD_NAMESPACE = os.environ.get("ARGOCD_NAMESPACE", "argocd")
 APPS_FILE = Path(os.environ.get(
     "APPS_FILE",
