@@ -1,5 +1,5 @@
 GITLAB_DOMAIN     ?= 192.168.33.100.nip.io
-PLATFORM_REPO_ROOT ?= $(abspath ../platform-cicd)
+PLATFORM_REPO_ROOT ?= $(abspath ../platform-gitops)
 PLATFORM_REPO_URL ?=
 GITLAB_TOKEN      ?=
 APPS_BASE_DIR     ?= $(CURDIR)

@@ -13,7 +13,7 @@ import yaml
 
 _PLATFORM_DEFAULTS = {
     "domain": "192.168.33.100.nip.io",
-    "repoURL": "https://github.com/elkouhen/poc-devops-platform.git",
+    "repoURL": "https://github.com/poc-devops-elkouhen/platform-gitops",
     "targetRevision": "main",
     "registry": {"host": "registry.registry.svc.cluster.local:5000"},
 }
