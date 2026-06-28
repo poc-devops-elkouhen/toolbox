@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Clone platform repo, apply changes, push a branch, open a GitLab MR."""
+"""Clone the GitOps repo, apply changes, push a branch, open a GitLab MR."""
 from __future__ import annotations
 
 import json
@@ -171,7 +171,7 @@ def _push_branch_and_create_mr(repo_root: Path, branch: str, commit_msg: str, mr
 
 
 def create_mr_for_init(argv: list[str]) -> None:
-    """Clone platform, run init logic, render appset, open a GitLab MR."""
+    """Clone GitOps repo, run init logic, render appset, open a GitLab MR."""
     from init_projects.config import load_config
     from init_projects.app_model import build_app
     from init_projects.inventory import write_app_file
@@ -201,7 +201,7 @@ def create_mr_for_init(argv: list[str]) -> None:
 
 
 def create_mr_for_delete(argv: list[str]) -> None:
-    """Clone platform, remove app inventory, render appset, open a GitLab MR."""
+    """Clone GitOps repo, remove app inventory, render appset, open a GitLab MR."""
     from delete_projects import delete_project
     from init_projects.common import slug
     from platform_inventory import platform_repo_root

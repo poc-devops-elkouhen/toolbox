@@ -9,7 +9,7 @@
 - `scripts/gitlab-seed.py` synchronise GitLab avec l'inventaire.
 - `scripts/argocd-repo-creds.py` crée les credentials ArgoCD.
 - `scripts/platform_git.py` gère les opérations Git/MR en mode distant.
-- `scripts/platform_inventory.py` lit l'inventaire plateforme.
+- `scripts/platform_inventory.py` lit l'inventaire GitOps.
 
 ## Configuration
 
@@ -34,7 +34,6 @@ dépôt manifests.
 
 ## Maintenance
 
-Certains scripts existent aussi dans `platform-cicd/scripts/` pour garder
-le bootstrap plateforme autonome. Toute correction fonctionnelle d'un script
-partagé doit être répercutée dans les deux emplacements ou remplacée par un
-wrapper explicite documenté.
+Le bootstrap technique reste dans `platform-cicd`. La toolbox opère sur
+`platform-gitops` par défaut via `PLATFORM_REPO_ROOT`, afin que les opérations
+d'onboarding et de génération ciblent le dépôt suivi par ArgoCD.

@@ -19,7 +19,7 @@ USAGE = """Usage:
 
 Avec un nom de projet, les depots sont resolus depuis PROJECTS_DIR
 (par defaut: repertoire courant en mode PLATFORM_REPO_URL,
-sinon dossier parent du depot plateforme):
+sinon dossier parent du depot GitOps):
   PROJECTS_DIR/helloworld
   PROJECTS_DIR/helloworld-iac
 """

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Remove an app from the platform inventory.
+"""Remove an app from the GitOps inventory.
 
-No local platform checkout:
-  PLATFORM_REPO_URL=http://gitlab.../root/poc-devops-platform.git scripts/delete-project.py helloworld
+No local GitOps checkout:
+  PLATFORM_REPO_URL=https://github.com/poc-devops-elkouhen/platform-gitops.git scripts/delete-project.py helloworld
 
-Local platform checkout:
+Local GitOps checkout:
   PLATFORM_REPO_ROOT="$PWD" scripts/delete-project.py helloworld
 
-When PLATFORM_REPO_URL is set, clones the platform repo, applies the change,
-renders the ApplicationSet, and opens a GitLab MR instead of writing directly
-to the local filesystem.
+When PLATFORM_REPO_URL is set, clones the source GitOps repo,
+applies the change, renders the ApplicationSet, and opens a merge request instead
+of writing directly to the local filesystem.
 """
 
 import os

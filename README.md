@@ -14,14 +14,14 @@ python3 -m venv .venv
 pip install -r requirements.txt
 ```
 
-## Ajouter un projet sans checkout plateforme
+## Ajouter un projet sans checkout GitOps
 
 Pour ajouter un projet standard comme `helloworld`, le developpeur n'a pas
 besoin de cloner `platform-gitops`. Depuis le dossier qui contient les
 dépôts `helloworld` et `helloworld-iac`:
 
 ```sh
-PLATFORM_REPO_URL=https://github.com/poc-devops-elkouhen/platform-gitops \
+PLATFORM_REPO_URL=https://github.com/poc-devops-elkouhen/platform-gitops.git \
 GITLAB_TOKEN=<token> \
 python3 /chemin/toolbox/scripts/init-project.py helloworld
 ```
@@ -33,7 +33,7 @@ une branche `toolbox/add-helloworld`, puis ouvre une merge request.
 Si les dépôts applicatifs sont dans un autre dossier:
 
 ```sh
-PLATFORM_REPO_URL=https://github.com/poc-devops-elkouhen/platform-gitops \
+PLATFORM_REPO_URL=https://github.com/poc-devops-elkouhen/platform-gitops.git \
 GITLAB_TOKEN=<token> \
 PROJECTS_DIR=/chemin/projets \
 python3 /chemin/toolbox/scripts/init-project.py helloworld
@@ -43,7 +43,7 @@ Les URLs Git restent possibles lorsque le développeur n'a pas non plus les
 dépôts applicatifs en local:
 
 ```sh
-PLATFORM_REPO_URL=https://github.com/poc-devops-elkouhen/platform-gitops \
+PLATFORM_REPO_URL=https://github.com/poc-devops-elkouhen/platform-gitops.git \
 GITLAB_TOKEN=<token> \
 python3 /chemin/toolbox/scripts/init-project.py \
   https://git.example.com/team/helloworld.git \
@@ -55,7 +55,7 @@ python3 /chemin/toolbox/scripts/init-project.py \
 Pour retirer `helloworld` de la plateforme sans cloner `platform-gitops`:
 
 ```sh
-PLATFORM_REPO_URL=https://github.com/poc-devops-elkouhen/platform-gitops \
+PLATFORM_REPO_URL=https://github.com/poc-devops-elkouhen/platform-gitops.git \
 GITLAB_TOKEN=<token> \
 python3 /chemin/toolbox/scripts/delete-project.py helloworld
 ```
@@ -94,7 +94,7 @@ Depuis n'importe quel autre répertoire, renseigner `PLATFORM_REPO_ROOT` avec le
 ## Variables utiles
 
 - `PLATFORM_REPO_ROOT`: racine du dépôt GitOps. Par defaut: `../platform-gitops`.
-- `PLATFORM_REPO_URL`: URL Git du dépôt GitOps. Si renseignée, les scripts projet ouvrent une merge request au lieu d'écrire dans un checkout local.
+- `PLATFORM_REPO_URL`: URL GitHub du dépôt GitOps source. Si renseignée, les scripts projet ouvrent une merge request au lieu d'écrire dans un checkout local.
 - `GITLAB_TOKEN`: token utilisé pour cloner/pousser le dépôt GitOps et créer la merge request.
 - `PROJECTS_DIR`: dossier contenant les dépôts applicatifs lorsque `init-project.py` est appelé avec un nom de projet. Par défaut: répertoire courant en mode `PLATFORM_REPO_URL`, sinon dossier parent du dépôt GitOps.
 - `APPS_FILE`: chemin explicite vers l'inventaire apps.

@@ -6,12 +6,12 @@ L'utilisateur peut appeler `init-project.py` avec un nom de projet, deux chemins
 locaux ou deux URLs Git. Le script découvre les sources, construit le modèle
 d'application et écrit le fichier d'inventaire plateforme.
 
-En mode `PLATFORM_REPO_URL`, la toolbox clone temporairement la plateforme,
-pousse une branche dédiée et ouvre une merge request.
+En mode `PLATFORM_REPO_URL`, la toolbox clone temporairement le dépôt GitOps
+source sur GitHub, pousse une branche dédiée et ouvre une merge request.
 
 ## Supprimer une application
 
-`delete-project.py` retire le fichier d'application de l'inventaire plateforme,
+`delete-project.py` retire le fichier d'application de l'inventaire GitOps,
 régénère les manifests ArgoCD et ouvre une merge request en mode distant. La
 suppression ne détruit ni les dépôts GitLab ni les ressources déjà déployées.
 
@@ -32,4 +32,4 @@ Deux modes sont supportés :
 - dépôt distant avec `PLATFORM_REPO_URL` et `GITLAB_TOKEN`.
 
 Le mode distant est celui attendu pour un utilisateur qui ne veut pas cloner
-manuellement `platform-cicd`.
+manuellement `platform-gitops`.

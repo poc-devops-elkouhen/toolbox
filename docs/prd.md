@@ -33,7 +33,8 @@ La toolbox doit permettre :
 - Les scripts acceptent `PLATFORM_REPO_ROOT` pour travailler avec un checkout
   local.
 - Les scripts acceptent `PLATFORM_REPO_URL` et `GITLAB_TOKEN` pour travailler
-  via clone temporaire et merge request.
+  via clone temporaire et merge request. Cette URL doit pointer vers le dépôt
+  GitOps source sur GitHub.
 - L'onboarding génère ou met à jour `argocd/apps/<app>.yaml`.
 - La suppression retire l'entrée d'application sans supprimer les dépôts
   applicatifs.

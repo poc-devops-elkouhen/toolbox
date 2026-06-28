@@ -4,12 +4,12 @@
 Local platform checkout:
   scripts/init-project.py ../my-app ../my-app-iac
 
-No local platform checkout:
-  PLATFORM_REPO_URL=http://gitlab.../root/poc-devops-platform.git scripts/init-project.py helloworld
+No local GitOps checkout:
+  PLATFORM_REPO_URL=https://github.com/poc-devops-elkouhen/platform-gitops.git scripts/init-project.py helloworld
 
-When PLATFORM_REPO_URL is set, clones the platform repo, applies the change,
-renders the ApplicationSet, and opens a GitLab MR instead of writing directly
-to the local filesystem.
+When PLATFORM_REPO_URL is set, clones the source GitOps repo,
+applies the change, renders the ApplicationSet, and opens a merge request instead
+of writing directly to the local filesystem.
 """
 
 import os
