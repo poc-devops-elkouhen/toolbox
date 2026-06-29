@@ -116,7 +116,7 @@ CI_TEMPLATE_REF = (
     os.environ.get("CI_TEMPLATE_REF")
     or config_value("platform.ciTemplate.ref")
     or inventory_value("ciTemplate.ref")
-    or "v0.11.1"
+    or "v1.13.1"
 )
 CI_TEMPLATE_FILE = (
     os.environ.get("CI_TEMPLATE_FILE")
@@ -323,13 +323,6 @@ def ensure_project(project_path, project_name):
                 sys.exit(1)
         else:
             return project.get("empty_repo") is True, project["id"]
-
-    status, project = http(
-        f"{GITLAB_URL}/api/v4/projects/{encode_path(project_path)}",
-        token=bearer_token,
-    )
-    if status == 200 and project.get("id"):
-        return project.get("empty_repo") is True, project["id"]
 
     print(f"Projet '{project_path}' absent, création...", file=sys.stderr)
     status, project = http(
@@ -686,7 +679,7 @@ for app in inventory["apps"]:
     )
 
     services_str = " ".join(f"{s['name']}={s['image']}" for s in app["services"])
-    has_preprod_str = str(app["hasPreprod"]).lower()
+    has_preprod_str = str(app.get("hasPreprod", False)).lower()
 
     _, code_project_id = ensure_project(code["projectPath"], code["projectName"])
     ensure_push_token_variable(code_project_id, app_name)
