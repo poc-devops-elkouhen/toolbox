@@ -1,3 +1,6 @@
+SHELL := /bin/bash -e -o pipefail
+.SHELLFLAGS := -e -o pipefail -c
+
 GITLAB_DOMAIN           ?= 192.168.33.100.nip.io
 INTERNAL_GITLAB_HOST    ?= gitlab-webservice-default.gitlab.svc.cluster.local:8181
 PLATFORM_REPO_ROOT ?= $(abspath ../platform-gitops)
