@@ -37,9 +37,10 @@ Les projets GitLab ne sont plus seedés depuis `toolbox`. Ils sont déclarés da
 ## Pipeline d'onboarding automatique
 
 Depuis l'automatisation ajoutée dans `platform-gitops` (pipeline
-`.gitlab-ci.yml`, exécuté sur le mirror GitLab interne du dépôt), une simple
-PR sur GitHub ajoutant `argocd/apps/<app>.yaml` (avec au minimum `name`,
-`description` et `services`) suffit à déclencher :
+`.gitlab-ci.yml` du projet GitLab `platform-gitops`, développé directement sur
+GitLab et mirroré vers GitHub), une simple MR ajoutant
+`argocd/apps/<app>.yaml` (avec au minimum `name`, `description` et `services`)
+suffit à déclencher :
 1. la régénération des manifests ArgoCD (`platform-cicd/scripts/render-argocd-apps.py`) ;
 2. la régénération de `gitlab-projects-iac/terraform/apps.auto.tfvars.json`
    (`toolbox/scripts/render-gitlab-projects.py`), qui fait ensuite créer/mettre
@@ -47,7 +48,10 @@ PR sur GitHub ajoutant `argocd/apps/<app>.yaml` (avec au minimum `name`,
 
 Le champ `description` est optionnel, transparent pour `_normalize_app`
 (copié tel quel), et propagé à la fois dans l'`AppProject` ArgoCD
-(`spec.description`) et dans la description du projet GitLab.
+(`spec.description`) et dans la description du projet GitLab. Le champ
+`importFromGithub` (optionnel, défaut `false`) ne doit être mis à `true` que
+pour une app dont le code préexiste déjà sur GitHub avant onboarding — les
+nouvelles apps sont créées vides sur GitLab.
 
 ## Variables d'environnement importantes
 

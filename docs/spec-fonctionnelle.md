@@ -25,16 +25,17 @@ La toolbox expose aussi :
 La création ou mise à jour des projets GitLab est portée par
 `gitlab-projects-iac`, appliqué par le `Terraform/gitlab-iac`.
 
-## Onboarding automatique via PR
+## Onboarding automatique via MR
 
-Une PR sur `platform-gitops` (GitHub) ajoutant `argocd/apps/<app>.yaml` (name,
-description, services) est mergée sur `main`, propagée par mirror pull vers le
-projet GitLab interne du même nom, ce qui déclenche son pipeline
-`.gitlab-ci.yml`. Ce pipeline régénère automatiquement les manifests ArgoCD et
-le fichier `apps.auto.tfvars.json` de `gitlab-projects-iac`, et pousse les
-commits générés directement sur GitHub (dépôt canonique surveillé par
-ArgoCD/Flux). L'utilisateur n'a plus qu'à écrire ce seul fichier ; tout le
-reste (conf ArgoCD, projets GitLab) est dérivé et committé par le bot.
+Une MR sur le projet GitLab `platform-gitops` ajoutant `argocd/apps/<app>.yaml`
+(name, description, services) déclenche directement, au merge sur `main`, le
+pipeline `.gitlab-ci.yml` de ce projet. Ce pipeline régénère automatiquement
+les manifests ArgoCD (commit sur le même projet GitLab, mirroré vers GitHub) et
+le fichier `apps.auto.tfvars.json` de `gitlab-projects-iac` (commit direct sur
+GitHub, dépôt canonique surveillé par ArgoCD/Flux). L'utilisateur n'a plus
+qu'à écrire ce seul fichier ; tout le reste (conf ArgoCD, projets GitLab —
+créés vides, sans import GitHub, sauf apps historiques marquées
+`importFromGithub: true`) est dérivé et committé par le bot.
 
 ## Modes d'utilisation
 
