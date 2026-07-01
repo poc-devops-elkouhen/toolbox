@@ -18,7 +18,7 @@ _PLATFORM_DEFAULTS = {
     "registry": {"host": "ghcr.io/poc-devops-elkouhen"},
 }
 
-_GITLAB_ROOT_NAMESPACE = "root"
+_GITLAB_APPS_NAMESPACE = "infra"
 
 _cached_root: Path | None = None
 
@@ -126,7 +126,7 @@ def _normalize_app(app: dict, inventory: dict, pconst: dict) -> dict:
     # manifests: projectPath and projectName derived from name
     manifests = dict(app.get("manifests", {}))
     if "projectPath" not in manifests:
-        manifests["projectPath"] = f"{_GITLAB_ROOT_NAMESPACE}/{name}-iac"
+        manifests["projectPath"] = f"{_GITLAB_APPS_NAMESPACE}/{name}-iac"
     if "projectName" not in manifests:
         manifests["projectName"] = f"{name}-iac"
     # repoURL (user-facing, external GitLab or source repo) derived if absent
@@ -147,11 +147,11 @@ def _normalize_app(app: dict, inventory: dict, pconst: dict) -> dict:
     # code: repoURL (user-facing, external GitLab) and localPath derived if absent
     code = dict(app.get("code", {}))
     if "projectPath" not in code:
-        code["projectPath"] = f"{_GITLAB_ROOT_NAMESPACE}/{name}"
+        code["projectPath"] = f"{_GITLAB_APPS_NAMESPACE}/{name}"
     if "projectName" not in code:
         code["projectName"] = name
     if "repoURL" not in code:
-        code["repoURL"] = f"https://gitlab.{domain}/{_GITLAB_ROOT_NAMESPACE}/{name}.git"
+        code["repoURL"] = f"https://gitlab.{domain}/{_GITLAB_APPS_NAMESPACE}/{name}.git"
     if "localPath" not in code:
         code["localPath"] = f"../{name}"
     if "mainPushAccessLevel" not in code:
