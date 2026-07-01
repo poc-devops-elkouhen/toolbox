@@ -15,8 +15,6 @@ La toolbox doit permettre :
 
 - d'ajouter une application à l'inventaire plateforme ;
 - de supprimer une application de cet inventaire ;
-- de générer les Applications ArgoCD ;
-- de seeder les projets GitLab déclarés ;
 - de créer les credentials ArgoCD pour les dépôts manifests privés ;
 - de récupérer un token GitLab utile aux opérations locales.
 
@@ -35,7 +33,7 @@ La toolbox doit permettre :
 - Les scripts acceptent `PLATFORM_REPO_URL` et `GITHUB_TOKEN` pour travailler
   via clone temporaire et pull request GitHub. Cette URL doit pointer vers le
   dépôt GitOps source sur GitHub.
-- L'onboarding génère ou met à jour `argocd/apps/<app>.yaml`.
+- L'onboarding génère ou met à jour `argocd/apps/<app>/`.
 - La suppression retire l'entrée d'application sans supprimer les dépôts
   applicatifs.
 - Les commandes principales sont disponibles depuis le `Makefile`.

@@ -3,16 +3,15 @@
 ## Rôle du dépôt
 
 `toolbox` regroupe les scripts d'opération plateforme utilisables indépendamment
-de `platform-cicd`. Il permet d'onboarder des applications, de seeder GitLab et
-de gérer les credentials ArgoCD sans checkout actif de `platform-cicd`.
+de `platform-cicd`. Il permet d'onboarder des applications et de gérer les
+credentials ArgoCD sans checkout actif de `platform-cicd`.
 
 ## Fichiers clés
 
 | Fichier | Rôle |
 |---------|------|
 | `scripts/platform_inventory.py` | Modèle de données partagé (chargement et normalisation de l'inventaire) |
-| `scripts/gitlab-seed.py` | Seed complet : template CI + dépôts manifests + dépôts code |
-| `scripts/init-project.py` | Onboarding d'une app (met à jour `argocd/apps/<app>.yaml`) |
+| `scripts/init-project.py` | Onboarding d'une app (met à jour `argocd/apps/<app>/`) |
 | `scripts/argocd-repo-creds.py` | Crée les secrets ArgoCD pour les dépôts manifests privés |
 | `scripts/get-gitlab-token.py` | Récupère un token GitLab pour les opérations locales |
 | `scripts/delete-project.py` / `delete_projects.py` | Suppression d'apps de l'inventaire |
@@ -21,14 +20,17 @@ de gérer les credentials ArgoCD sans checkout actif de `platform-cicd`.
 
 **Mode local** — dépôt `platform-gitops` cloné localement :
 ```bash
-PLATFORM_REPO_ROOT=../platform-gitops make gitlab-seed
+PLATFORM_REPO_ROOT=../platform-gitops make argocd-repo-creds
 ```
 
 **Mode MR** — clone temporaire depuis GitHub :
 ```bash
 PLATFORM_REPO_URL=https://github.com/poc-devops-elkouhen/platform-gitops \
-GITHUB_TOKEN=<token> make gitlab-seed
+GITHUB_TOKEN=<token> make init-project
 ```
+
+Les projets GitLab ne sont plus seedés depuis `toolbox`. Ils sont déclarés dans
+`gitlab-projects-iac` et appliqués par le `Terraform/gitlab-iac`.
 
 ## Variables d'environnement importantes
 

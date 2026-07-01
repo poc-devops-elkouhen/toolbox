@@ -13,8 +13,7 @@ def build_app(config: InitProjectConfig) -> dict:
         },
     }
     # sourceURL = URL externe d'origine, distincte de repoURL (URL GitLab de la plateforme,
-    # dérivée par convention dans _normalize_app). Utilisée par gitlab-seed pour cloner
-    # les repos à pousser vers GitLab sans dépendre d'une copie locale.
+    # dérivée par convention dans _normalize_app).
     if _is_git_url(config.code_ref):
         app["code"] = {"sourceURL": config.code_ref}
     if _is_git_url(config.iac_ref):
