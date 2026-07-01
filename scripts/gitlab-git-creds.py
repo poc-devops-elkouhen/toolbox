@@ -74,7 +74,7 @@ def gitlab_api(path, data=None, token=None, method=None):
     )
     try:
         with urllib.request.urlopen(req, context=_ssl_ctx()) as resp:
-            return json.loads(resp.read())
+            return json.loads(resp.read() or b"{}")
     except urllib.error.HTTPError as e:
         return json.loads(e.read() or b"{}")
 
